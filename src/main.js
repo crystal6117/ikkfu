@@ -2,36 +2,51 @@ import { StackActions, useNavigation, useRoute } from '@react-navigation/native'
 import React from 'react';
 import { useEffect } from 'react';
 import { useState } from 'react';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, View, useWindowDimensions, TouchableOpacity } from 'react-native';
 import GestureRecognizer, { swipeDirections } from 'react-native-swipe-gestures';
-import { callAPI } from './api';
+import { callAPI, deckNames, deckReview, showAnswer } from './api';
+import HTML from "react-native-render-html";
 
 const Screen = () => {
     const route = useRoute();
     const parameter = route.params?.parameter;
+    const cardId = route.params?.cardId;
     const [loading, setLoading] = useState(true);
     const navigation = useNavigation();
     const [content, setContent] = useState('');
+    const [result, setResult] = useState({});
+    const [answerShowed, setAnswerShowed] = useState(false);
+
+    const init = async () => {
+        if (parameter != 'home') {
+            console.log(parameter, cardId);
+            callAPI(parameter, cardId);
+        }
+
+        const deck = await deckNames();
+        const review = await deckReview(deck);
+        console.log(deck, review)
+        callAPI('home').then(res => {
+            setResult({
+                cardId: res?.result?.cardId,
+                question: res?.result?.question,
+                answer: res?.result?.answer,
+            });
+            setContent("<div class='card'>" + res?.result?.question + "</div>");
+            setLoading(false);
+        }).catch(error => {
+            setContent("Error in calling api.")
+            setLoading(false);
+        })
+    }
 
     useEffect(() => {
-        if (parameter === 'home') {
-            setLoading(false)
-            setContent("Now you can swipe.")
-        }
-        else {
-            callAPI(parameter).then(res => {
-                setContent(JSON.stringify(res));
-                setLoading(false);
-            }).catch(error => {
-                setContent("Error in calling api.")
-                setLoading(false);
-            })
-        }
+        init();
     }, [])
 
-    const gotoNext = (target) => {
+    const gotoNext = (target, param) => {
         navigation.dispatch(
-            StackActions.replace(target)
+            StackActions.replace(target, { cardId: param })
         );
     }
 
@@ -39,7 +54,7 @@ const Screen = () => {
         const { SWIPE_UP, SWIPE_DOWN, SWIPE_LEFT, SWIPE_RIGHT } = swipeDirections;
         switch (gestureName) {
             case SWIPE_UP:
-                gotoNext('up');
+                gotoNext('up', result.cardId);
                 break;
             case SWIPE_DOWN:
                 gotoNext('down');
@@ -53,11 +68,18 @@ const Screen = () => {
         }
     }
 
+    const tapQuestion = async () => {
+        const res = await showAnswer();
+        console.log("res", res);
+        setContent("<div class='card'>" + result.answer + "</div>")
+    }
+
     const config = {
         velocityThreshold: 0.3,
         directionalOffsetThreshold: 80
     };
 
+    const contentWidth = useWindowDimensions().width;
     return (
         <GestureRecognizer
             onSwipe={(direction, state) => onSwipe(direction, state)}
@@ -71,12 +93,26 @@ const Screen = () => {
         >
             {
                 loading ? (
-                        <ActivityIndicator size='large' color="gray" />
+                    <ActivityIndicator size='large' color="gray" />
                 ) : (
-                        <View>
-                            <Text>{content}</Text>
-                        </View>
-                    )
+                    <View>
+                        {
+                            answerShowed ? (
+                                <HTML
+                                    source={{ html: content }}
+                                    contentWidth={contentWidth}
+                                />
+                            ) : (
+                                <TouchableOpacity onPress={tapQuestion}>
+                                    <HTML
+                                        source={{ html: content }}
+                                        contentWidth={contentWidth}
+                                    />
+                                </TouchableOpacity>
+                            )
+                        }
+                    </View>
+                )
             }
         </GestureRecognizer>
     )

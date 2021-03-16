@@ -51,7 +51,7 @@ const Screen = () => {
                     <TextInput
                         onChangeText={(val) => setServerAddr(val)}
                         style={styles.input}
-                        value={serverAddr}
+                        value={`${serverAddr ? serverAddr : ''}`}
                     />
                 </View>
 
@@ -63,7 +63,7 @@ const Screen = () => {
                         keyboardType="number-pad"
                         onChangeText={(val) => setServerPort(val)}
                         style={styles.input}
-                        value={serverPort}
+                        value={`${serverPort ? serverPort : ''}`}
                     />
                 </View>
 
