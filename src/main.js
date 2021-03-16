@@ -18,15 +18,17 @@ const Screen = () => {
     const [answerShowed, setAnswerShowed] = useState(false);
 
     const init = async () => {
-        if (parameter != 'home') {
-            console.log(parameter, cardId);
-            callAPI(parameter, cardId);
-        }
+        try {
+            if (parameter != 'home') {
+                console.log(parameter, cardId);
+                await callAPI(parameter, cardId);
+            }
 
-        const deck = await deckNames();
-        const review = await deckReview(deck);
-        console.log(deck, review)
-        callAPI('home').then(res => {
+            const deck = await deckNames();
+            const review = await deckReview(deck);
+            console.log(deck, review)
+            const res = await callAPI('home')
+
             setResult({
                 cardId: res?.result?.cardId,
                 question: res?.result?.question,
@@ -34,10 +36,10 @@ const Screen = () => {
             });
             setContent("<div class='card'>" + res?.result?.question + "</div>");
             setLoading(false);
-        }).catch(error => {
+        } catch (error) {
             setContent("Error in calling api.")
             setLoading(false);
-        })
+        }
     }
 
     useEffect(() => {
