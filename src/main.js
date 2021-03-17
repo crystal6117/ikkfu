@@ -32,7 +32,7 @@ const Screen = () => {
             if (parameter != 'home') {
                 await callAPI(parameter, cardId);
 
-                switch(parameter) {
+                switch (parameter) {
                     case 'left':
                         setContent("You got it right! Time for the next one!")
                         break;
@@ -117,34 +117,30 @@ const Screen = () => {
                 alignItems: 'center'
             }}
         >
-            {
-                loading ? (
-                    <ActivityIndicator size='large' color="gray" />
-                ) : (
-                    <View>
-                        <HTML
-                            source={{ html: content }}
-                            contentWidth={contentWidth}
-                        />
-                    </View>
-                )
-            }
+
+            <View>
+                <HTML
+                    source={{ html: content }}
+                    contentWidth={contentWidth}
+                />
+            </View>
             {
                 (!toast && !answerShowed) && (
-                    <View
+                    <TouchableOpacity
+                        onPress={tapQuestion}
                         style={{
                             position: 'absolute',
-                            bottom: 20,
+                            bottom: 0,
                             left: 0,
                             right: 0,
-                            height: 30,
-                            alignItems: 'center'
+                            top: 0,
+                            alignItems: 'center',
+                            justifyContent: 'flex-end'
                         }}
                     >
-                        <TouchableOpacity onPress={tapQuestion}>
                             <Text>Tap to see answer.</Text>
-                        </TouchableOpacity>
-                    </View>
+                            <View style={{height: 20}} />
+                    </TouchableOpacity>
                 )
             }
         </GestureRecognizer>
