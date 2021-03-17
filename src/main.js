@@ -2,31 +2,52 @@ import { StackActions, useNavigation, useRoute } from '@react-navigation/native'
 import React from 'react';
 import { useEffect } from 'react';
 import { useState } from 'react';
-import { ActivityIndicator, View, useWindowDimensions, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, View, useWindowDimensions, TouchableOpacity, Text } from 'react-native';
 import GestureRecognizer, { swipeDirections } from 'react-native-swipe-gestures';
 import { callAPI, deckNames, deckReview, showAnswer } from './api';
 import HTML from "react-native-render-html";
+
+const delayFunc = (mili) => {
+    return new Promise((resolve, reject) => {
+        if (typeof mili !== 'number') reject();
+        setTimeout(() => {
+            resolve();
+        }, mili)
+    })
+}
 
 const Screen = () => {
     const route = useRoute();
     const parameter = route.params?.parameter;
     const cardId = route.params?.cardId;
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(false);
     const navigation = useNavigation();
-    const [content, setContent] = useState('');
+    const [content, setContent] = useState('<div></div>');
     const [result, setResult] = useState({});
     const [answerShowed, setAnswerShowed] = useState(false);
+    const [toast, showToast] = useState(true);
 
     const init = async () => {
         try {
             if (parameter != 'home') {
-                console.log(parameter, cardId);
                 await callAPI(parameter, cardId);
+
+                switch(parameter) {
+                    case 'left':
+                        setContent("You got it right! Time for the next one!")
+                        break;
+                    case 'right':
+                        setContent("We'll show this again soon! Let's keep going!")
+                        break;
+                    case 'down':
+                        setContent("Let's show you more related to this prompt!")
+                        break;
+                }
+                await delayFunc(2000);
             }
 
             const deck = await deckNames();
             const review = await deckReview(deck);
-            console.log(deck, review)
             const res = await callAPI('home')
 
             setResult({
@@ -36,9 +57,11 @@ const Screen = () => {
             });
             setContent("<div class='card'>" + res?.result?.question + "</div>");
             setLoading(false);
+            showToast(false)
         } catch (error) {
-            setContent("Error in calling api.")
+            setContent(error.toString());
             setLoading(false);
+            showToast(false)
         }
     }
 
@@ -73,6 +96,7 @@ const Screen = () => {
     const tapQuestion = async () => {
         const res = await showAnswer();
         console.log("res", res);
+        setAnswerShowed(true);
         setContent("<div class='card'>" + result.answer + "</div>")
     }
 
@@ -98,21 +122,28 @@ const Screen = () => {
                     <ActivityIndicator size='large' color="gray" />
                 ) : (
                     <View>
-                        {
-                            answerShowed ? (
-                                <HTML
-                                    source={{ html: content }}
-                                    contentWidth={contentWidth}
-                                />
-                            ) : (
-                                <TouchableOpacity onPress={tapQuestion}>
-                                    <HTML
-                                        source={{ html: content }}
-                                        contentWidth={contentWidth}
-                                    />
-                                </TouchableOpacity>
-                            )
-                        }
+                        <HTML
+                            source={{ html: content }}
+                            contentWidth={contentWidth}
+                        />
+                    </View>
+                )
+            }
+            {
+                (!toast && !answerShowed) && (
+                    <View
+                        style={{
+                            position: 'absolute',
+                            bottom: 20,
+                            left: 0,
+                            right: 0,
+                            height: 30,
+                            alignItems: 'center'
+                        }}
+                    >
+                        <TouchableOpacity onPress={tapQuestion}>
+                            <Text>Tap to see answer.</Text>
+                        </TouchableOpacity>
                     </View>
                 )
             }
