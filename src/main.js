@@ -106,6 +106,8 @@ const Screen = () => {
     };
 
     const contentWidth = useWindowDimensions().width;
+    const Container = (!toast && !answerShowed) ? TouchableOpacity : View;
+    console.log("!toast && !answerShowed", (!toast && !answerShowed))
     return (
         <GestureRecognizer
             onSwipe={(direction, state) => onSwipe(direction, state)}
@@ -113,36 +115,38 @@ const Screen = () => {
             style={{
                 flex: 1,
                 backgroundColor: 'white',
-                justifyContent: 'center',
-                alignItems: 'center'
             }}
         >
-
-            <View>
+            <Container
+                onPress={tapQuestion}
+                style={{
+                    flex: 1,
+                    width: '100%',
+                    justifyContent: 'center',
+                    alignItems: 'center'
+                }}
+            >
                 <HTML
                     source={{ html: content }}
                     contentWidth={contentWidth}
                 />
-            </View>
-            {
-                (!toast && !answerShowed) && (
-                    <TouchableOpacity
-                        onPress={tapQuestion}
-                        style={{
-                            position: 'absolute',
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            top: 0,
-                            alignItems: 'center',
-                            justifyContent: 'flex-end'
-                        }}
-                    >
+                {
+                    (!toast && !answerShowed) && (
+                        <TouchableOpacity
+                            onPress={tapQuestion}
+                            style={{
+                                position: 'absolute',
+                                bottom: 20,
+                                left: 0,
+                                right: 0,
+                                alignItems: 'center'
+                            }}
+                        >
                             <Text>Tap to see answer.</Text>
-                            <View style={{height: 20}} />
-                    </TouchableOpacity>
-                )
-            }
+                        </TouchableOpacity>
+                    )
+                }
+            </Container>
         </GestureRecognizer>
     )
 }
